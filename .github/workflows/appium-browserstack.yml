@@ -1,0 +1,77 @@
+name: Appium Tests (BrowserStack)
+
+on:
+  workflow_dispatch:
+    inputs:
+      TEST_GROUP:
+        description: "TestNG group to run (smoke, regression, e2e)"
+        required: false
+        default: ""
+  push:
+    branches:
+      - main
+      - develop
+
+env:
+  BROWSERSTACK_BUILD_NAME: "SBM_TAG_Appium_${{ github.run_number }}"
+  BROWSERSTACK_PROJECT_NAME: "SBM TAG Mobile Automation"
+  TEST_GROUP: ${{ github.event.inputs.TEST_GROUP }}
+
+jobs:
+  appium-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ----------------------------------------------------
+    # 1. Checkout Code
+    # ----------------------------------------------------
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # ----------------------------------------------------
+    # 2. Setup Java
+    # ----------------------------------------------------
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # ----------------------------------------------------
+    # 3. Setup Maven Cache
+    # ----------------------------------------------------
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          maven-
+
+    # ----------------------------------------------------
+    # 4. Run Appium Tests on BrowserStack
+    # ----------------------------------------------------
+    - name: Run Appium Tests (BrowserStack)
+      env:
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      run: |
+        if [ -n "$TEST_GROUP" ]; then
+          echo "Running TestNG group: $TEST_GROUP"
+          mvn clean test -Dgroups=$TEST_GROUP
+        else
+          echo "Running full test suite"
+          mvn clean test
+        fi
+
+    # ----------------------------------------------------
+    # 5. Upload Extent Report + Logs
+    # ----------------------------------------------------
+    - name: Upload Test Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: appium-extent-report
+        path: |
+          test-output/**
+          logs/**
