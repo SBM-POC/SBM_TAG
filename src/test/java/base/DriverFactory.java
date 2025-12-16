@@ -6,10 +6,11 @@ import io.appium.java_client.ios.IOSDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DriverFactory {
 
-    // One single ThreadLocal that owns the driver for the whole framework
     private static ThreadLocal<AppiumDriver> driver = new ThreadLocal<>();
 
     public static AppiumDriver getDriver() {
@@ -27,9 +28,6 @@ public class DriverFactory {
         }
     }
 
-    /**
-     * CREATE DRIVER — called from BaseTest.launchApp()
-     */
     public static AppiumDriver createDriver(String deviceName,
                                             String platformVersion,
                                             String environment,
@@ -39,22 +37,39 @@ public class DriverFactory {
 
         DesiredCapabilities caps = new DesiredCapabilities();
 
+        boolean isBrowserStack = System.getenv("BROWSERSTACK_USERNAME") != null;
+
         // -------- COMMON CAPS --------
         caps.setCapability("deviceName", deviceName);
         caps.setCapability("platformVersion", platformVersion);
-        caps.setCapability("platformName", platformType);          // Android / iOS
+        caps.setCapability("platformName", platformType);
         caps.setCapability("newCommandTimeout", 300);
 
         if (platformType.equalsIgnoreCase("Android")) {
             caps.setCapability("automationName", "UiAutomator2");
-            caps.setCapability("noReset", false);
-            caps.setCapability("fullReset", true);
-            caps.setCapability("unicodeKeyboard", true);
-            caps.setCapability("resetKeyboard", true);
 
-            // ---------- APP UNDER TEST (SBMBANK) ----------
-            if (appType != null && appType.equalsIgnoreCase("SBMBANK")) {
+            // --------------------------------------------------
+            // 🔥 APP CONFIGURATION (LOCAL vs BROWSERSTACK)
+            // --------------------------------------------------
+            if (isBrowserStack) {
 
+                // 👉 BrowserStack App (bs://...)
+                caps.setCapability("app", System.getenv("BROWSERSTACK_APP"));
+
+                Map<String, Object> bstackOptions = new HashMap<>();
+                bstackOptions.put("userName", System.getenv("BROWSERSTACK_USERNAME"));
+                bstackOptions.put("accessKey", System.getenv("BROWSERSTACK_ACCESS_KEY"));
+                bstackOptions.put("projectName", "SBM TAG Mobile Automation");
+                bstackOptions.put("buildName", "GitHub Appium Build");
+                bstackOptions.put("sessionName", "Android Tests");
+                bstackOptions.put("debug", true);
+                bstackOptions.put("networkLogs", true);
+
+                caps.setCapability("bstack:options", bstackOptions);
+
+            } else {
+
+                // 👉 LOCAL APK LOGIC (UNCHANGED)
                 String base = System.getProperty("user.dir");
                 String appPath;
 
@@ -63,7 +78,7 @@ public class DriverFactory {
                         appPath = base + "/TestData/sbmDEV.apk";
                         break;
                     case "preprod":
-                        appPath = base + "/STD/sbmPreprod.apk";  // STD folder at project root
+                        appPath = base + "/STD/sbmPreprod.apk";
                         break;
                     case "uat":
                         appPath = base + "/STD/sbmUAT.apk";
@@ -81,13 +96,20 @@ public class DriverFactory {
             }
 
         } else if (platformType.equalsIgnoreCase("iOS")) {
-            // ---------- iOS BASELINE ----------
             caps.setCapability("automationName", "XCUITest");
-            // TODO: Add bundleId / app path when needed
+            // Same pattern applies later for iOS
         }
 
-        // -------- APPIUM SERVER URL --------
-        URL serverURL = new URL("http://127.0.0.1:" + portNumber);
+        // --------------------------------------------------
+        // 🔥 SERVER URL (LOCAL vs BROWSERSTACK)
+        // --------------------------------------------------
+        URL serverURL;
+
+        if (isBrowserStack) {
+            serverURL = new URL("https://hub.browserstack.com/wd/hub");
+        } else {
+            serverURL = new URL("http://127.0.0.1:" + portNumber);
+        }
 
         AppiumDriver appiumDriver;
 
