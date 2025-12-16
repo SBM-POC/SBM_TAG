@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-
+ 
 <suite name="SBM Mobile Automation Suite" parallel="tests">
-
+ 
     <!-- Extent Test Listener -->
-    <listeners>
-        <listener class-name="listeners.ExtentTestListener"/>
-
+<listeners>
+<listener class-name="listeners.ExtentTestListener"/>
+ 
     </listeners>
-
-    <!-- =======================
-         LOGIN TEST EXECUTION
+ 
+    <!-- =======================[bn=
+         TEST EXECUTION
          ======================= -->
-    <test name="Login">
-        <parameter name="appType" value="SBMBANK"/>
-        <parameter name="platformType" value="Android"/>
-        <parameter name="deviceName" value="emulator-5554"/>
-        <parameter name="platformVersion" value="14"/>
-        <parameter name="portNumber" value="4723"/>
-        <parameter name="environment" value="uat"/>
+<test name="Browser Stack Test">
+<parameter name="deviceName" value="Samsung Galaxy S22"/>
+<parameter name="platformVersion" value="12.0"/>
+    <parameter name="environment" value="uat"/>
+    <parameter name="portNumber" value="4723"/>
+    <parameter name="platformType" value="Android"/>
+    <parameter name="appType" value="SBMBANK"/>
 
-        <classes>
-            <class name="suites.E2ETransferTest"/>
-        </classes>
-    </test>
+    <!-- MOST IMPORTANT -->
+    <parameter name="execution" value="BROWSERSTACK"/> <!-- or LOCAL -->
 
+    <!-- Only required for BrowserStack -->
+    <parameter name="bsAppUrl" value="bs://d21bfe65fcda766e2a9e3620b6323bb6f9691001"/>
+    <parameter name="bsUser" value="rishisoorkia_LhmIwH"/>
+    <parameter name="bsKey"  value="qqLgxSKvcvNp3ZJiqxhG"/>
+ 
+    <classes>
+        <class name="suites.E2EPayToMobileTest"/>
+    </classes>
+</test>
+ 
 </suite>
