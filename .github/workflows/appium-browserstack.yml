@@ -13,8 +13,10 @@ on:
       - develop
 
 env:
+  CI: "true"
   BROWSERSTACK_BUILD_NAME: "SBM_TAG_Appium_${{ github.run_number }}"
   BROWSERSTACK_PROJECT_NAME: "SBM TAG Mobile Automation"
+  BROWSERSTACK_APP: ${{ secrets.BROWSERSTACK_APP }}
   TEST_GROUP: ${{ github.event.inputs.TEST_GROUP }}
 
 jobs:
@@ -38,7 +40,7 @@ jobs:
         java-version: '17'
 
     # ----------------------------------------------------
-    # 3. Setup Maven Cache
+    # 3. Cache Maven dependencies
     # ----------------------------------------------------
     - name: Cache Maven packages
       uses: actions/cache@v4
@@ -58,16 +60,19 @@ jobs:
       run: |
         if [ -n "$TEST_GROUP" ]; then
           echo "Running TestNG group: $TEST_GROUP"
-          mvn clean test -Dgroups=$TEST_GROUP
+          mvn clean test \
+            -Dgroups=$TEST_GROUP \
+            -Dsurefire.suiteXmlFiles=testng.xml
         else
           echo "Running full test suite"
-          mvn clean test
+          mvn clean test \
+            -Dsurefire.suiteXmlFiles=testng.xml
         fi
 
     # ----------------------------------------------------
     # 5. Upload Extent Report + Logs
     # ----------------------------------------------------
-    - name: Upload Test Artifacts
+    - name: Upload Extent Report & Logs
       if: always()
       uses: actions/upload-artifact@v4
       with:
