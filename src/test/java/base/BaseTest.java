@@ -58,7 +58,7 @@ public class BaseTest {
         rm.setupExtentReports();
 
         // 2) Start Appium server (single instance for the suite)
-        AppiumServerManager.startServer();
+       //ppiumServerManager.startServer();
     }
 
     // ------------------------ BEFORE TEST ------------------------
