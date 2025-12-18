@@ -61,8 +61,7 @@ jobs:
         if [ -n "$TEST_GROUP" ]; then
           echo "Running TestNG group: $TEST_GROUP"
           mvn clean test \
-            -Dgroups=$TEST_GROUP \
-            -Dsurefire.suiteXmlFiles=testng.xml
+            -Dgroups=$TEST_GROUP \            
         else
           echo "Running full test suite"
           mvn clean test \
